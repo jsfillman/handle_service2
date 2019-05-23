@@ -7,6 +7,8 @@ import requests as _requests
 
 class ShockUtil:
 
+    SERVER_TYPE = 'Shock'
+
     def _get_header(self, token):
         return {'Authorization': 'OAuth {}'.format(token)}
 
@@ -38,9 +40,24 @@ class ShockUtil:
             else:
                 return True
 
+    def _check_shock_conn(self, shock_url):
+        end_point = self.shock_url + '/'
+        resp = _requests.put(end_point)
+
+        if resp.status_code != 200:
+            raise ValueError('Connot connect to shock server.\nError Code: {}\n{}\n'
+                             .format(resp.status_code, resp.text))
+        else:
+            data = resp.json()
+            if data.get('type') != self.SERVER_TYPE or data.get('url') != end_point:
+                raise ValueError('Unexpected response from shock server.\nError Code: {}\n{}\n'
+                                 .format(resp.status_code, resp.text))
+
     def __init__(self, config):
         self.shock_url = config.get('shock-url')
         self.admin_token = config.get('admin-token')
+
+        self._check_shock_conn(self.shock_url)
 
         logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
                             level=logging.INFO)

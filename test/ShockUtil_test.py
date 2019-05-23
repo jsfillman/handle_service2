@@ -4,6 +4,7 @@ import unittest
 from configparser import ConfigParser
 import inspect
 import requests as _requests
+from unittest.mock import patch
 
 from AbstractHandle.authclient import KBaseAuth as _KBaseAuth
 from AbstractHandle.Utils.ShockUtil import ShockUtil
@@ -76,6 +77,19 @@ class ShockUtilTest(unittest.TestCase):
         class_attri = ['admin_token', 'shock_url']
         shock_util = self.getShockUtil()
         self.assertTrue(set(class_attri) <= set(shock_util.__dict__.keys()))
+
+    @patch.object(ShockUtil, "SERVER_TYPE", new='fake_server_type')
+    def test_init_fail(self):
+        self.start_test()
+        config = {'shock-url': self.shock_url + '/' + 'fake_endpoint_100'}
+        with self.assertRaises(ValueError) as context:
+            ShockUtil(config)
+        self.assertIn('Connot connect to shock server', str(context.exception.args))
+
+        config = {'shock-url': self.shock_url}
+        with self.assertRaises(ValueError) as context:
+            ShockUtil(config)
+        self.assertIn('Unexpected response from shock server', str(context.exception.args))
 
     def test_get_owner_fail(self):
         self.start_test()

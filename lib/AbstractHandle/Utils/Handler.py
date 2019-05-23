@@ -40,7 +40,8 @@ class Handler:
 
         handle = {k: v for k, v in handle.items() if k in self.FIELD_NAMES}  # remove unnecessary fields
         if not handle.get('hid'):
-            handle['hid'] = 'KBH_' + str(uuid.uuid4())
+            hid_counter = self.mongo_util.get_hid_counter()
+            handle['hid'] = 'KBH_' + str(hid_counter)
 
         handle['_id'] = handle.get('hid')  # assign _id to hid
 
@@ -131,11 +132,6 @@ class Handler:
 
         handle = self._process_handle(handle, user_id)
         hid = handle.get('hid')
-
-        try:
-            hid = int(hid)
-        except Exception:
-            pass
 
         docs = self.mongo_util.find_in([hid], 'hid')
 

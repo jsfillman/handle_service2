@@ -99,7 +99,9 @@ def main(argv):
     mongo_port = 27017
     mongo_database = 'handle_db'
     mongo_collection = 'handle'
+    mongo_counter_collection = 'handle_id_counter'
     my_collection = connect_mongo(mongo_host, mongo_port, mongo_database, mongo_collection)
+    counter_collection = connect_mongo(mongo_host, mongo_port, mongo_database, mongo_counter_collection)
 
     mycursor.execute("SELECT COUNT(*) FROM Handle")
     myresult = mycursor.fetchall()
@@ -113,16 +115,31 @@ def main(argv):
                'created_by', 'creation_date']
 
     insert_records = 0
+    max_counter = 0
     for x in myresult:
         doc = dict(zip(columns, x))
-        doc['_id'] = doc['hid']
+        hid = doc['hid']
+        doc['_id'] = hid
+        counter_str = hid.split('KBH_')[-1]
+        try:
+            counter = int(counter_str)
+        except Exception:
+            counter = 0
+
+        if counter > max_counter:
+            max_counter = counter
+
         if insert_one(my_collection, doc):
             insert_records += 1
 
         if insert_records/5000 == 0:
             print('inserted {} records'.format(insert_records))
 
+    counter_collection.delete_many({})
+    counter_collection.insert_one({'_id': 'hid_counter', 'hid_counter': max_counter + 1})
+
     print('totally inserted {} records'.format(insert_records))
+    print('largest counter'.format(max_counter))
 
 
 if __name__ == "__main__":

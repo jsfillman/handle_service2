@@ -26,6 +26,9 @@ RUN pip install pymongo
 RUN pip install mock
 RUN pip install cachetools
 
+RUN pip install coverage && \
+    pip install pathos
+
 
 # -----------------------------------------
 

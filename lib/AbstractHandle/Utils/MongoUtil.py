@@ -8,6 +8,8 @@ import traceback
 
 class MongoUtil:
 
+    HID_COUNTER_ID = 'hid_counter'
+
     def _start_service(self):
         logging.info('starting mongod service')
 
@@ -46,18 +48,43 @@ class MongoUtil:
 
         return my_collection
 
+    def _inc_counter(self):
+        counter = self.get_hid_counter()
+
+        counter += 1
+
+        update_filter = {'_id': self.HID_COUNTER_ID}
+        update = {'$set': {self.HID_COUNTER_ID: counter}}
+        self.hid_counter_collection.update_one(update_filter, update)
+
     def __init__(self, config):
         self.mongo_host = config['mongo-host']
         self.mongo_port = int(config['mongo-port'])
         self.mongo_database = config['mongo-database']
         self.mongo_collection = config['mongo-collection']
+        self.mongo_hid_counter_collection = config['mongo-hid-counter-collection']
 
         self._start_service()
         self.handle_collection = self._get_collection(self.mongo_host, self.mongo_port,
                                                       self.mongo_database, self.mongo_collection)
 
+        self.hid_counter_collection = self._get_collection(self.mongo_host, self.mongo_port,
+                                                           self.mongo_database,
+                                                           self.mongo_hid_counter_collection)
+
         logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
                             level=logging.INFO)
+
+    def get_hid_counter(self):
+        """
+        get current handle id counter
+        """
+        counter = self.hid_counter_collection.find({'_id': {'$eq': self.HID_COUNTER_ID}})
+
+        if counter.count():
+            return counter.next().get('hid_counter')
+        else:
+            return 0
 
     def find_in(self, elements, field_name, projection={'_id': False}, batch_size=1000):
         """
@@ -87,6 +114,7 @@ class MongoUtil:
 
         try:
             self.handle_collection.insert_one(doc)
+            self._inc_counter()
         except Exception as e:
             error_msg = 'Connot insert doc\n'
             error_msg += 'ERROR -- {}:\n{}'.format(

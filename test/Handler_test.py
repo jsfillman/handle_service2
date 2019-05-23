@@ -26,6 +26,8 @@ class HandlerTest(unittest.TestCase):
             cls.cfg[nameval[0]] = nameval[1]
         cls.cfg['admin-token'] = cls.token
         cls.cfg['mongo-collection'] = 'handle'
+        cls.cfg['mongo-hid-counter-collection'] = 'handle_id_counter'
+
         # Getting username from Auth profile for token
         authServiceUrl = cls.cfg['auth-service-url']
         auth_client = _KBaseAuth(authServiceUrl)
@@ -105,11 +107,11 @@ class HandlerTest(unittest.TestCase):
         handler = self.getHandler()
 
         # test query 'hid' field
-        elements = [68021, 68022]
+        elements = ['KBH_68020', 'KBH_68022', 'fake_id']
         field_name = 'hid'
         handles = handler.fetch_handles_by({'elements': elements, 'field_name': field_name})
         self.assertEqual(len(handles), 2)
-        self.assertCountEqual(elements, [h.get('hid') for h in handles])
+        self.assertCountEqual(elements[:2], [h.get('hid') for h in handles])
 
         # test query 'hid' field with empty data
         elements = [0]
@@ -124,7 +126,7 @@ class HandlerTest(unittest.TestCase):
         self.assertEqual(len(handles), 1)
         handle = handles[0]
         self.assertFalse('_id' in handle)
-        self.assertEqual(handle.get('hid'), 67712)
+        self.assertEqual(handle.get('hid'), 'KBH_68020')
 
     def test_persist_handle_fail(self):
         self.start_test()
@@ -157,10 +159,14 @@ class HandlerTest(unittest.TestCase):
                   'type': 'shock',
                   'url': 'http://ci.kbase.us:7044/'}
         # testing persist_handle with non-existing handle (inserting a handle)
+        counter = handler.mongo_util.get_hid_counter()
         hid = handler.persist_handle(handle, self.user_id)
+        new_counter = handler.mongo_util.get_hid_counter()
+        self.assertEqual(new_counter, counter + 1)  # counter should increment
         handles = handler.fetch_handles_by({'elements': [hid], 'field_name': 'hid'})
         self.assertEqual(len(handles), 1)
         handle = handles[0]
+        self.assertEqual(hid, 'KBH_' + str(counter))
         self.assertEqual(handle.get('hid'), hid)
         self.assertEqual(handle.get('id'), 'id')
         self.assertEqual(handle.get('file_name'), 'file_name')
@@ -172,10 +178,14 @@ class HandlerTest(unittest.TestCase):
         new_id = 'new_id'
         new_handle['file_name'] = new_file_name
         new_handle['id'] = new_id
+        counter = handler.mongo_util.get_hid_counter()
         new_hid = handler.persist_handle(new_handle, self.user_id)
+        new_counter = handler.mongo_util.get_hid_counter()
+        self.assertEqual(new_counter, counter)  # counter shouldn't increment
         handles = handler.fetch_handles_by({'elements': [new_hid], 'field_name': 'hid'})
         self.assertEqual(len(handles), 1)
         handle = handles[0]
+        self.assertEqual(new_hid, 'KBH_' + str(counter-1))
         self.assertEqual(handle.get('hid'), hid)
         self.assertEqual(handle.get('id'), new_id)
         self.assertEqual(handle.get('file_name'), new_file_name)

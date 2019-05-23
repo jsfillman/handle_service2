@@ -21,6 +21,7 @@ class MongoUtilTest(unittest.TestCase):
             cls.cfg[nameval[0]] = nameval[1]
 
         cls.cfg['mongo-collection'] = 'handle'
+        cls.cfg['mongo-hid-counter-collection'] = 'handle_id_counter'
 
         cls.mongo_helper = MongoHelper()
         cls.my_client = cls.mongo_helper.create_test_db(db=cls.cfg['mongo-database'],
@@ -48,7 +49,8 @@ class MongoUtilTest(unittest.TestCase):
 
     def test_init_ok(self):
         self.start_test()
-        class_attri = ['mongo_host', 'mongo_port', 'mongo_database', 'mongo_collection', 'handle_collection']
+        class_attri = ['mongo_host', 'mongo_port', 'mongo_database', 'mongo_collection',
+                       'handle_collection', 'hid_counter_collection']
         mongo_util = self.getMongoUtil()
         self.assertTrue(set(class_attri) <= set(mongo_util.__dict__.keys()))
 
@@ -56,12 +58,15 @@ class MongoUtilTest(unittest.TestCase):
         self.assertEqual(handle_collection.name, 'handle')
         self.assertEqual(handle_collection.count_documents({}), 10)
 
+        hid_counter_collection = mongo_util.hid_counter_collection
+        self.assertEqual(hid_counter_collection.name, 'handle_id_counter')
+
     def test_find_in_ok(self):
         self.start_test()
         mongo_util = self.getMongoUtil()
 
         # test query 'hid' field
-        elements = [68021, 68022]
+        elements = ['KBH_68020', 'KBH_68022', 'fake_id']
         docs = mongo_util.find_in(elements, 'hid')
         self.assertEqual(docs.count(), 2)
 
@@ -76,15 +81,15 @@ class MongoUtilTest(unittest.TestCase):
         self.assertEqual(docs.count(), 1)
         doc = docs.next()
         self.assertFalse('_id' in doc.keys())
-        self.assertEqual(doc.get('hid'), 67712)
+        self.assertEqual(doc.get('hid'), 'KBH_68020')
 
         # test null projection
         elements = ['b753774f-0bbd-4b96-9202-89b0c70bf31c']
         docs = mongo_util.find_in(elements, 'id', projection=None)
         self.assertEqual(docs.count(), 1)
         doc = docs.next()
-        self.assertEqual(doc.get('_id'), 67712)
-        self.assertEqual(doc.get('hid'), 67712)
+        self.assertEqual(doc.get('_id'), 'KBH_68020')
+        self.assertEqual(doc.get('hid'), 'KBH_68020')
 
     def test_update_one_ok(self):
         self.start_test()
@@ -114,7 +119,10 @@ class MongoUtilTest(unittest.TestCase):
         self.assertEqual(mongo_util.handle_collection.find().count(), 10)
 
         doc = {'_id': 9999, 'hid': 9999, 'file_name': 'fake_file'}
+        counter = mongo_util.get_hid_counter()
         mongo_util.insert_one(doc)
+        new_counter = mongo_util.get_hid_counter()
+        self.assertEqual(new_counter, counter + 1)
 
         self.assertEqual(mongo_util.handle_collection.find().count(), 11)
         elements = [9999]

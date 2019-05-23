@@ -121,11 +121,11 @@ class handle_serviceTest(unittest.TestCase):
         handler = self.getImpl()
 
         # test query 'hid' field
-        elements = [68021, 68022]
+        elements = ['KBH_68020', 'KBH_68022', 'fake_id']
         field_name = 'hid'
         handles = handler.fetch_handles_by(self.ctx, {'elements': elements, 'field_name': field_name})[0]
         self.assertEqual(len(handles), 2)
-        self.assertCountEqual(elements, [h.get('hid') for h in handles])
+        self.assertCountEqual(elements[:2], [h.get('hid') for h in handles])
 
         # test query 'hid' field with empty data
         elements = [0]
@@ -140,7 +140,7 @@ class handle_serviceTest(unittest.TestCase):
         self.assertEqual(len(handles), 1)
         handle = handles[0]
         self.assertFalse('_id' in handle)
-        self.assertEqual(handle.get('hid'), 67712)
+        self.assertEqual(handle.get('hid'), 'KBH_68020')
 
     def test_ids_to_handles_ok(self):
         self.start_test()
@@ -151,16 +151,16 @@ class handle_serviceTest(unittest.TestCase):
         self.assertEqual(len(handles), 1)
         handle = handles[0]
         self.assertFalse('_id' in handle)
-        self.assertEqual(handle.get('hid'), 67712)
+        self.assertEqual(handle.get('hid'), 'KBH_68020')
 
     def test_hids_to_handles_ok(self):
         self.start_test()
         handler = self.getImpl()
 
-        hids = [68021, 68022]
+        hids = ['KBH_68020', 'KBH_68022', 'fake_id']
         handles = handler.hids_to_handles(self.ctx, hids)[0]
         self.assertEqual(len(handles), 2)
-        self.assertCountEqual(hids, [h.get('hid') for h in handles])
+        self.assertCountEqual(hids[:2], [h.get('hid') for h in handles])
 
     def test_persist_handle_ok(self):
         self.start_test()
@@ -171,10 +171,14 @@ class handle_serviceTest(unittest.TestCase):
                   'type': 'shock',
                   'url': 'http://ci.kbase.us:7044/'}
         # testing persist_handle with non-existing handle (inserting a handle)
+        counter = self.mongo_util.get_hid_counter()
         hid = handler.persist_handle(self.ctx, handle)[0]
+        new_counter = self.mongo_util.get_hid_counter()
+        self.assertEqual(new_counter, counter + 1)
         handles = handler.fetch_handles_by(self.ctx, {'elements': [hid], 'field_name': 'hid'})[0]
         self.assertEqual(len(handles), 1)
         handle = handles[0]
+        self.assertEqual(hid, 'KBH_' + str(counter))
         self.assertEqual(handle.get('hid'), hid)
         self.assertEqual(handle.get('id'), 'id')
         self.assertEqual(handle.get('file_name'), 'file_name')
@@ -186,10 +190,14 @@ class handle_serviceTest(unittest.TestCase):
         new_id = 'new_id'
         new_handle['file_name'] = new_file_name
         new_handle['id'] = new_id
+        counter = self.mongo_util.get_hid_counter()
         new_hid = handler.persist_handle(self.ctx, new_handle)[0]
+        new_counter = self.mongo_util.get_hid_counter()
         handles = handler.fetch_handles_by(self.ctx, {'elements': [new_hid], 'field_name': 'hid'})[0]
+        self.assertEqual(new_counter, counter)  # counter shouldn't increment
         self.assertEqual(len(handles), 1)
         handle = handles[0]
+        self.assertEqual(new_hid, 'KBH_' + str(counter-1))
         self.assertEqual(handle.get('hid'), new_hid)
         self.assertEqual(handle.get('id'), new_id)
         self.assertEqual(handle.get('file_name'), new_file_name)
