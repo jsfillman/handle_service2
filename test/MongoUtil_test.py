@@ -22,6 +22,7 @@ class MongoUtilTest(unittest.TestCase):
 
         cls.cfg['mongo-collection'] = 'handle'
         cls.cfg['mongo-hid-counter-collection'] = 'handle_id_counter'
+        cls.cfg['mongo-authmechanism'] = 'DEFAULT'
 
         cls.mongo_helper = MongoHelper()
         cls.my_client = cls.mongo_helper.create_test_db(db=cls.cfg['mongo-database'],
@@ -66,7 +67,7 @@ class MongoUtilTest(unittest.TestCase):
         mongo_util = self.getMongoUtil()
 
         # test query 'hid' field
-        elements = ['KBH_68020', 'KBH_68022', 'fake_id']
+        elements = ['68020', '68022', 'fake_id']
         docs = mongo_util.find_in(elements, 'hid')
         self.assertEqual(docs.count(), 2)
 
@@ -81,15 +82,15 @@ class MongoUtilTest(unittest.TestCase):
         self.assertEqual(docs.count(), 1)
         doc = docs.next()
         self.assertFalse('_id' in doc.keys())
-        self.assertEqual(doc.get('hid'), 'KBH_68020')
+        self.assertEqual(doc.get('hid'), '68020')
 
         # test null projection
         elements = ['b753774f-0bbd-4b96-9202-89b0c70bf31c']
         docs = mongo_util.find_in(elements, 'id', projection=None)
         self.assertEqual(docs.count(), 1)
         doc = docs.next()
-        self.assertEqual(doc.get('_id'), 'KBH_68020')
-        self.assertEqual(doc.get('hid'), 'KBH_68020')
+        self.assertEqual(doc.get('_id'), 68020)
+        self.assertEqual(doc.get('hid'), '68020')
 
     def test_update_one_ok(self):
         self.start_test()

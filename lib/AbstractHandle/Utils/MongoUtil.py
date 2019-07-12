@@ -10,8 +10,8 @@ class MongoUtil:
 
     HID_COUNTER_ID = 'hid_counter'
 
-    def _start_service(self):
-        logging.info('starting mongod service')
+    def _start_local_service(self):
+        logging.info('starting local mongod service')
 
         logging.info('running sudo service mongodb start')
         pipe = subprocess.Popen("sudo service mongodb start", shell=True, stdout=subprocess.PIPE,
@@ -26,12 +26,21 @@ class MongoUtil:
 
         logging.info(stdout)
 
-    def _get_collection(self, mongo_host, mongo_port, mongo_database, mongo_collection):
+    def _get_collection(self, mongo_host, mongo_port, mongo_database, mongo_collection,
+                        mongo_user=None, mongo_password=None, mongo_authmechanism='DEFAULT'):
         """
         connect Mongo server and return a collection
         """
 
-        my_client = MongoClient(mongo_host, mongo_port)
+        if mongo_user:
+            logging.info('mongo-user found in config file, configuring client for authentication using mech ' + str(mongo_authmechanism) )
+            my_client = MongoClient(mongo_host, mongo_port,
+                                    username=mongo_user, password=mongo_password,
+                                    authSource=mongo_database,
+                                    authMechanism=mongo_authmechanism)
+        else:
+            logging.info('no mongo-user found in config file, connecting without auth')
+            my_client = MongoClient(mongo_host, mongo_port)
 
         try:
             my_client.server_info()  # force a call to server
@@ -61,16 +70,30 @@ class MongoUtil:
         self.mongo_host = config['mongo-host']
         self.mongo_port = int(config['mongo-port'])
         self.mongo_database = config['mongo-database']
+        self.mongo_user = config['mongo-user']
+        self.mongo_pass = config['mongo-password']
+        self.mongo_authmechanism = config['mongo-authmechanism']
+
         self.mongo_collection = config['mongo-collection']
         self.mongo_hid_counter_collection = config['mongo-hid-counter-collection']
 
-        self._start_service()
+        try:
+            start_local = int(config.get('start-local-mongo', 1))
+        except Exception:
+            start_local = 1
+        if start_local:
+            self._start_local_service()
+
         self.handle_collection = self._get_collection(self.mongo_host, self.mongo_port,
-                                                      self.mongo_database, self.mongo_collection)
+                                                      self.mongo_database, self.mongo_collection,
+                                                      self.mongo_user, self.mongo_pass,
+                                                      self.mongo_authmechanism)
 
         self.hid_counter_collection = self._get_collection(self.mongo_host, self.mongo_port,
                                                            self.mongo_database,
-                                                           self.mongo_hid_counter_collection)
+                                                           self.mongo_hid_counter_collection,
+                                                           self.mongo_user, self.mongo_pass,
+                                                           self.mongo_authmechanism)
 
         logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
                             level=logging.INFO)

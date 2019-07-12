@@ -1,0 +1,22 @@
+[AbstractHandle]
+mongo-host  = {{ default .Env.mongo_host "localhost" }}
+mongo-port  = {{ default .Env.mongo_port "27017" }}
+mongo-database = {{ default .Env.mongo_database "handle_db" }}
+mongo-authmechanism = {{ default .Env.mongo_authmechanism "DEFAULT" }}
+mongo-user = {{ default .Env.mongo_user "" }}
+mongo-password = {{ default .Env.mongo_password "" }}
+
+start-local-mongo = {{ default .Env.start_local_mongo "0" }}
+
+auth-service-url = {{ default .Env.auth_legacy_url "http://localhost" }}
+auth-url = {{ default .Env.auth_url "http://localhost" }}
+shock-url = {{ default .Env.shock_url "http://localhost" }}
+
+# KBase auth roles for the account approved to assign/modify shock node ACLs (run add_read_acl).
+admin-roles = {{ default .Env.admin_roles "HANDLE_ADMIN, KBASE_ADMIN" }}
+
+# The credential for the account approved to set shock node ACL. This account should be a shock admin.
+admin-token = {{ default .Env.admin_token "" }}
+
+# A prefix appended to handle id
+namespace = {{ default .Env.namespace "KBH" }}

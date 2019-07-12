@@ -29,6 +29,7 @@ provides a programmatic access to a remote file store
     #BEGIN_CLASS_HEADER
     MONGO_COLLECTION = 'handle'
     MONGO_HID_COUNTER_COLLECTION = 'handle_id_counter'
+    MONGO_AUTHMECHANISM = 'DEFAULT'
     #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
@@ -38,6 +39,7 @@ provides a programmatic access to a remote file store
         self.config = config
         self.config['mongo-collection'] = self.MONGO_COLLECTION
         self.config['mongo-hid-counter-collection'] = self.MONGO_HID_COUNTER_COLLECTION
+        self.config.setdefault('mongo-authmechanism', self.MONGO_AUTHMECHANISM)
 
         logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
                             level=logging.INFO)

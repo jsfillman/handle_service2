@@ -2,8 +2,11 @@
 
 
 import mysql.connector
+
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
+from pymongo.errors import BulkWriteError
+
 import traceback
 import sys
 import getopt
@@ -21,9 +24,19 @@ def connect_mysql(sql_server, sql_username, sql_password, sql_database):
     return my_sqldb
 
 
-def connect_mongo(mongo_host, mongo_port, mongo_database, mongo_collection):
-    my_client = MongoClient(mongo_host, mongo_port)
+def connect_mongo(mongo_host, mongo_port, mongo_database, mongo_collection,
+                  mongo_username=None, mongo_password=None, mongo_authmechanism='DEFAULT'):
 
+    if mongo_username:
+        print('mongo_user supplied, configuring client for authentication using mech ' + str(mongo_authmechanism) )
+        my_client = MongoClient(mongo_host, mongo_port,
+                                username=mongo_username, password=mongo_password,
+                                authSource=mongo_database,
+                                authMechanism=mongo_authmechanism)
+    else:
+        print('no mongo_user supplied, connecting without auth')
+        my_client = MongoClient(mongo_host, mongo_port)
+    
     try:
         my_client.server_info()  # force a call to server
     except ServerSelectionTimeoutError as e:
@@ -61,20 +74,27 @@ def insert_one(my_collection, doc):
 
 def main(argv):
 
-    input_args = ['sql_server', 'sql_username', 'sql_password', 'mongo_host']
+    input_args = ['sql_server', 'sql_username', 'sql_password', 'mongo_host',
+                  'mongo_username', 'mongo_password', 'mongo_authmechanism']
     sql_server = ''
     sql_username = ''
     sql_password = ''
     mongo_host = ''
+    mongo_username = None
+    mongo_password = None
+    mongo_authmechanism = 'DEFAULT'
+
+    usage_string = 'mysql_to_mongo.py --sql_server <sql_server> --sql_username <sql_username> --sql_password <sql_password> --mongo_host <mongo_host> [ --mongo_username <mongo_username> --mongo_password <mongo_password> [ --mongo_authmechanism <mongo_authmechanism> ] ]'
 
     try:
         opts, args = getopt.getopt(argv, "h", [a + '=' for a in input_args])
     except getopt.GetoptError:
-        print('mysql_to_mongo.py --sql_server <sql_server> --sql_username <sql_username> --sql_password <sql_password> --mongo_host <mongo_host>')
+        print('unrecognized option provided')
+        print(usage_string)
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('mysql_to_mongo.py --sql_server <sql_server> --sql_username <sql_username> --sql_password <sql_password> --mongo_host <mongo_host>')
+            print(usage_string)
             sys.exit()
         elif opt == '--sql_server':
             sql_server = arg
@@ -84,10 +104,16 @@ def main(argv):
             sql_password = arg
         elif opt == '--mongo_host':
             mongo_host = arg
+        elif opt == '--mongo_username':
+            mongo_username = arg
+        elif opt == '--mongo_password':
+            mongo_password = arg
+        elif opt == '--mongo_authmechanism':
+            mongo_authmechanism = arg
 
     if not all([sql_server, sql_username, sql_password, mongo_host]):
         print('missing one of requried args')
-        print('mysql_to_mongo.py --sql_server <sql_server> --sql_username <sql_username> --sql_password <sql_password> --mongo_host <mongo_host>')
+        print(usage_string)
         sys.exit()
 
     sql_port = 3306
@@ -100,8 +126,8 @@ def main(argv):
     mongo_database = 'handle_db'
     mongo_collection = 'handle'
     mongo_counter_collection = 'handle_id_counter'
-    my_collection = connect_mongo(mongo_host, mongo_port, mongo_database, mongo_collection)
-    counter_collection = connect_mongo(mongo_host, mongo_port, mongo_database, mongo_counter_collection)
+    my_collection = connect_mongo(mongo_host, mongo_port, mongo_database, mongo_collection, mongo_username, mongo_password, mongo_authmechanism)
+    counter_collection = connect_mongo(mongo_host, mongo_port, mongo_database, mongo_counter_collection, mongo_username, mongo_password, mongo_authmechanism)
 
     mycursor.execute("SELECT COUNT(*) FROM Handle")
     myresult = mycursor.fetchall()
@@ -109,37 +135,45 @@ def main(argv):
     print('total MySQL record count: {}'.format(total_records))
 
     mycursor.execute("SELECT * FROM Handle")
-    myresult = mycursor.fetchall()
 
     columns = ['hid', 'id', 'file_name', 'type', 'url', 'remote_md5', 'remote_sha1',
                'created_by', 'creation_date']
 
     insert_records = 0
     max_counter = 0
-    for x in myresult:
+    doc_insert_list = []
+
+    for x in mycursor:
         doc = dict(zip(columns, x))
         hid = doc['hid']
         doc['_id'] = hid
-        counter_str = hid.split('KBH_')[-1]
-        try:
-            counter = int(counter_str)
-        except Exception:
-            counter = 0
 
-        if counter > max_counter:
-            max_counter = counter
+        doc_insert_list.append(doc)
+        
+        if len(doc_insert_list) % 5000 == 0:
+            try:
+                insert_result = my_collection.insert_many(doc_insert_list,ordered=False)
+            except BulkWriteError as bwe:
+                print(bwe.details)
+            print ('inserted {} records'.format(len(insert_result.inserted_ids)))
+            doc_insert_list = []
 
-        if insert_one(my_collection, doc):
-            insert_records += 1
+# do one final bulk insert
+    try:
+        insert_result = my_collection.insert_many(doc_insert_list,ordered=False)
+    except BulkWriteError as bwe:
+        print(bwe.details)
+    print ('inserted {} records'.format(len(insert_result.inserted_ids)))
+    doc_insert_list = []
 
-        if insert_records/5000 == 0:
-            print('inserted {} records'.format(insert_records))
-
+# get the max_id from the handle collection itself instead of from the mysql ids
+    max_id = my_collection.find_one( sort = [("_id", -1)] )["_id"]
+    print ( max_id )
+    
     counter_collection.delete_many({})
-    counter_collection.insert_one({'_id': 'hid_counter', 'hid_counter': max_counter + 1})
+    counter_collection.insert_one({'_id': 'hid_counter', 'hid_counter': max_id + 1})
 
-    print('totally inserted {} records'.format(insert_records))
-    print('largest counter'.format(max_counter))
+    print('max id: {} '.format(max_id))
 
 
 if __name__ == "__main__":
