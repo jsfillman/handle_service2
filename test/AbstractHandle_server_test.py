@@ -227,6 +227,9 @@ class handle_serviceTest(unittest.TestCase):
         hid = handler.persist_handle(self.ctx, handle)[0]
         hids.append(hid)
 
+        is_owner = handler.is_owner(self.ctx, ['FAKEHANDLE_-100'])[0]
+        self.assertFalse(is_owner)
+
         is_owner = handler.is_owner(self.ctx, hids)[0]
         self.assertTrue(is_owner)
 
@@ -260,6 +263,9 @@ class handle_serviceTest(unittest.TestCase):
 
         are_readable = handler.are_readable(self.ctx, hids)[0]
         self.assertTrue(are_readable)
+
+        are_readable = handler.are_readable(self.ctx, ['fake_handle_id'])[0]
+        self.assertFalse(are_readable)
 
         is_readable = handler.is_readable(self.ctx, hids[0])[0]
         self.assertTrue(is_readable)

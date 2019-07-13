@@ -183,10 +183,10 @@ class Handler:
         check and see if token user is owner.username from shock node
         """
 
-        # remove 'KBH_' prefix for hids
-        hids = [hid.split(self.namespace + '_')[-1] for hid in hids]
-
-        handles = self.fetch_handles_by({'elements': hids, 'field_name': 'hid'})
+        try:
+            handles = self.fetch_handles_by({'elements': hids, 'field_name': 'hid'})
+        except Exception:
+            return 0
 
         for handle in handles:
             node_type = handle.get('type')
@@ -206,10 +206,10 @@ class Handler:
         check if nodes associated with handles is reachable/readable
         """
 
-        # remove 'KBH_' prefix for hids
-        hids = [hid.split(self.namespace + '_')[-1] for hid in hids]
-
-        handles = self.fetch_handles_by({'elements': hids, 'field_name': 'hid'})
+        try:
+            handles = self.fetch_handles_by({'elements': hids, 'field_name': 'hid'})
+        except Exception:
+            return 0
 
         for handle in handles:
             node_type = handle.get('type')
@@ -229,9 +229,6 @@ class Handler:
         """
         grand readable acl for username or global if username is empty
         """
-
-        # remove 'KBH_' prefix for hids
-        hids = [hid.split(self.namespace + '_')[-1] for hid in hids]
 
         if not self._is_admin_user(token):
             raise ValueError('User may not run add_read_acl/set_public_read method')
