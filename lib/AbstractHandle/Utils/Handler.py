@@ -40,9 +40,9 @@ class Handler:
         handle = {k: v for k, v in handle.items() if k in self.FIELD_NAMES}  # remove unnecessary fields
         if not handle.get('hid'):
             hid_counter = self.mongo_util.get_hid_counter()
-            handle['hid'] = str(hid_counter)
+            handle['hid'] = int(hid_counter)
         else:
-            handle['hid'] = handle['hid'].split(self.namespace + '_')[-1]
+            handle['hid'] = int(handle['hid'].split(self.namespace + '_')[-1])
 
         handle['_id'] = int(handle['hid'])  # assign _id to 'hid'
 
@@ -120,14 +120,14 @@ class Handler:
 
         if field_name == 'hid':
             # remove prefix for hids
-            elements = [hid.split(self.namespace + '_')[-1] for hid in elements]
+            elements = [int(hid.split(self.namespace + '_')[-1]) for hid in elements]
 
         docs = self.mongo_util.find_in(elements, field_name)
 
         handles = list()
         for doc in docs:
             # append prefix for returned hids
-            doc['hid'] = self.namespace + '_' + doc['hid']
+            doc['hid'] = self.namespace + '_' + str(doc['hid'])
             handles.append(doc)
 
         return handles
@@ -156,7 +156,7 @@ class Handler:
             # handle doesn't exist, insert handle
             self.mongo_util.insert_one(handle)
 
-        return str(self.namespace + '_' + hid)
+        return str(self.namespace + '_' + str(hid))
 
     def delete_handles(self, handles, user_id):
         """
@@ -172,7 +172,7 @@ class Handler:
 
         # remove 'KBH_' prefix for hids
         for handle in handles:
-            handle['hid'] = handle['hid'].split(self.namespace + '_')[-1]
+            handle['hid'] = int(handle['hid'].split(self.namespace + '_')[-1])
 
         deleted_count = self.mongo_util.delete_many(handles)
 

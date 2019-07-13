@@ -100,7 +100,7 @@ class handle_serviceTest(unittest.TestCase):
         handler = self.getImpl()
 
         # test query 'hid' field
-        elements = ['KBH_68020', 'KBH_68022', 'fake_id']
+        elements = ['KBH_68020', 'KBH_68022', 'KBH_00000']
         field_name = 'hid'
         handles = handler.fetch_handles_by(self.ctx, {'elements': elements, 'field_name': field_name})[0]
         self.assertEqual(len(handles), 2)
@@ -136,7 +136,7 @@ class handle_serviceTest(unittest.TestCase):
         self.start_test()
         handler = self.getImpl()
 
-        hids = ['KBH_68020', 'KBH_68022', 'fake_id']
+        hids = ['KBH_68020', 'KBH_68022', 'KBH_00000']
         handles = handler.hids_to_handles(self.ctx, hids)[0]
         self.assertEqual(len(handles), 2)
         self.assertCountEqual(hids[:2], [h.get('hid') for h in handles])

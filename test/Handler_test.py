@@ -108,7 +108,7 @@ class HandlerTest(unittest.TestCase):
         handler = self.getHandler()
 
         # test query 'hid' field
-        elements = ['KBH_68020', 'KBH_68022', 'fake_id']
+        elements = ['KBH_68020', 'KBH_68022', 'KBH_00000']
         field_name = 'hid'
         handles = handler.fetch_handles_by({'elements': elements, 'field_name': field_name})
         self.assertEqual(len(handles), 2)

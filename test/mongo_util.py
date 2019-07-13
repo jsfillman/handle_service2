@@ -27,16 +27,16 @@ class MongoHelper:
     def _get_default_handles(self):
 
         raw_handles = [
-            ['68020', 'b753774f-0bbd-4b96-9202-89b0c70bf31c', 'interleaved.fastq', 'shock', 'http://ci.kbase.us:7044/', None, None, 'tgu2', '2016-12-20 10:18:17'],
-            ['68021', '4cb26117-9793-4354-98a6-926c02a7bd0e', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', '2c40e80ae4fb981541fc6918035c8707', None, 'tgu2', '2016-12-21 10:34:20'],
-            ['68022', 'cadf4bd8-7d95-4edd-994c-b50e29c25e50', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', 'e47f6adcaa33436ad0746fe9f936e359', None, 'tgu2', '2016-12-21 10:57:06'],
-            ['68023', 'd24188ed-83ff-4939-9dc2-84cc758738a3', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', '1da5481d162ca923c3ad27722ffdd377', None, 'tgu2', '2016-12-21 11:12:29'],
-            ['68024', 'acd1d64b-da98-467f-b29c-baca2862dd23', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', '43966480eabf5848fdc6046ba4214bee', None, 'tgu2', '2016-12-21 11:18:57'],
-            ['68025', 'f973cbd3-8881-4281-afef-a8419629e813', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', 'c374414a78a20feb716ea71c0ecf0a58', None, 'tgu2', '2016-12-21 11:24:06'],
-            ['68026', 'a676f82a-adc5-478e-b85a-d8244eae965e', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', '79cc52fff3c465681d162ce3caa6e672', None, 'tgu2', '2016-12-21 11:29:37'],
-            ['68027', 'f4113d56-9840-4811-b32d-4ae09523389a', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', '15aa9c1535b0da2158f169c748ee2a11', None, 'tgu2', '2016-12-21 21:41:08'],
-            ['68028', 'a31db49f-447c-4fff-96d5-2981166c0b9b', 'tmp_fastq.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', 'f78e79df067806daa1f0946ddc790b53', None, 'tgu2', '2016-12-21 21:41:36'],
-            ['68029', '7a2ff7c8-d87d-4c25-ad25-5f85ea794afa', 'tmp_fastq.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', '05361e0506af15be6701b175adbb23e4', None, 'tgu2', '2016-12-21 21:45:39']]
+            [68020, 'b753774f-0bbd-4b96-9202-89b0c70bf31c', 'interleaved.fastq', 'shock', 'http://ci.kbase.us:7044/', None, None, 'tgu2', '2016-12-20 10:18:17'],
+            [68021, '4cb26117-9793-4354-98a6-926c02a7bd0e', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', '2c40e80ae4fb981541fc6918035c8707', None, 'tgu2', '2016-12-21 10:34:20'],
+            [68022, 'cadf4bd8-7d95-4edd-994c-b50e29c25e50', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', 'e47f6adcaa33436ad0746fe9f936e359', None, 'tgu2', '2016-12-21 10:57:06'],
+            [68023, 'd24188ed-83ff-4939-9dc2-84cc758738a3', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', '1da5481d162ca923c3ad27722ffdd377', None, 'tgu2', '2016-12-21 11:12:29'],
+            [68024, 'acd1d64b-da98-467f-b29c-baca2862dd23', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', '43966480eabf5848fdc6046ba4214bee', None, 'tgu2', '2016-12-21 11:18:57'],
+            [68025, 'f973cbd3-8881-4281-afef-a8419629e813', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', 'c374414a78a20feb716ea71c0ecf0a58', None, 'tgu2', '2016-12-21 11:24:06'],
+            [68026, 'a676f82a-adc5-478e-b85a-d8244eae965e', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', '79cc52fff3c465681d162ce3caa6e672', None, 'tgu2', '2016-12-21 11:29:37'],
+            [68027, 'f4113d56-9840-4811-b32d-4ae09523389a', 'SP1.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', '15aa9c1535b0da2158f169c748ee2a11', None, 'tgu2', '2016-12-21 21:41:08'],
+            [68028, 'a31db49f-447c-4fff-96d5-2981166c0b9b', 'tmp_fastq.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', 'f78e79df067806daa1f0946ddc790b53', None, 'tgu2', '2016-12-21 21:41:36'],
+            [68029, '7a2ff7c8-d87d-4c25-ad25-5f85ea794afa', 'tmp_fastq.fq.gz', 'shock', 'https://ci.kbase.us/services/shock-api', '05361e0506af15be6701b175adbb23e4', None, 'tgu2', '2016-12-21 21:45:39']]
 
         key_names = ['_id', 'hid', 'id', 'file_name', 'type', 'url', 'remote_md5', 'remote_sha1',
                      'created_by', 'creation_date']
